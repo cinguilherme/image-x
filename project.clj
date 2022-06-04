@@ -6,6 +6,8 @@
   :dependencies [[org.clojure/clojure "1.11.0"]
                  [org.clojure/core.async "1.5.648"]
                  [clj-file-zip "0.1.0"]
+                 [prismatic/schema "1.2.0"]
+                 [org.clojure/data.csv "1.0.1"]
                  [cheshire "5.11.0"]
                  [image-resizer "0.1.10"]]
   :plugins [[lein-cloverage "1.0.13"]

@@ -8,7 +8,7 @@
 
 (defn load-image-uris-from-resource
   ([]
-   (-> "resources/images-uris.edn" slurp edn/read-string :images-uris))
+   (-> "resources/images.edn" slurp edn/read-string :images-uris))
   ([file-path]
    (-> file-path slurp edn/read-string :images-uris)))
 
@@ -63,15 +63,17 @@
 (defn resize-images!->collect-names [images-names]
   (let [fn-quality-500 (resize/resize-fn 500 500 scales/ultra-quality)
         fn-quality-200 (resize/resize-fn 200 200 scales/ultra-quality)
+        fn-quality-100 (resize/resize-fn 100 100 scales/ultra-quality)
         fn-quality-50 (resize/resize-fn 50 50 scales/ultra-quality)
-        _ (println "Resizing images... to 500x500")
+        _ (println "Resizing images...")
+
         z500 (pmap #(resize-with-new-names % 500 fn-quality-500) images-names)
-        _ (println "Resizing images... to 200x200")
         z200 (pmap #(resize-with-new-names % 200 fn-quality-200) images-names)
-        _ (println "Resizing images... to 50x50")
-        z50 (pmap #(resize-with-new-names % 50 fn-quality-50) images-names)]
-    (do (println (->> [z500 z200 z50 images-names] flatten vec))
-        (->> [z500 z200 z50 images-names] flatten vec))))
+        z100 (pmap #(resize-with-new-names % 100 fn-quality-100) images-names)
+        z50 (pmap #(resize-with-new-names % 50 fn-quality-50) images-names)
+
+        _ (println "Resizing images...done")]
+    (->> [z500 z200 z100 z50 images-names] flatten vec)))
 
 
 (defn images->zip [images-uris]
