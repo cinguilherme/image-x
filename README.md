@@ -7,7 +7,7 @@ A Small Clojure library designed to make it easy to download
 and resize images from uris and make it available in a zip file. 
 
 ```clj
-[org.clojars.cinguilherme/image-x "0.0.0"]
+[org.clojars.cinguilherme/image-x "0.1.1"]
 ```
 
 ## Usage

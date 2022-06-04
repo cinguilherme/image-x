@@ -1,4 +1,4 @@
-(defproject org.clojars.cinguilherme/image-x "0.0.0"
+(defproject org.clojars.cinguilherme/image-x "0.1.1"
   :description "FIXME: write description"
   :url "https://github.com/cinguilherme/image-x"
   :license {:name "Eclipse Public License"
