@@ -3,7 +3,8 @@
 [![codecov](https://codecov.io/gh/cinguilherme/image-x/branch/master/graph/badge.svg)](https://codecov.io/gh/cinguilherme/image-x)
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cinguilherme/image-x.svg)](https://clojars.org/org.clojars.cinguilherme/image-x)
 
-A Clojure library designed to ... well, that part is up to you.
+A Small Clojure library designed to make it easy to download 
+and resize images from uris and make it available in a zip file. 
 
 ```clj
 [org.clojars.cinguilherme/image-x "0.0.0"]
@@ -11,7 +12,8 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-FIXME
+(:require [image-x.image-source :as is])
+(is/images->zip [uri1 uri2 uri3])
 
 ## License
 
