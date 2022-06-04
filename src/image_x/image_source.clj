@@ -1,6 +1,10 @@
 (ns image-x.image-source
   (:require [clojure.java.io :as io]
-            [clj-file-zip.core :as zip]))
+            [clj-file-zip.core :as zip]
+            [clojure.edn :as edn]))
+
+(defn load-image-uris-from-resource []
+  (-> "resources/images-uris.edn" slurp edn/read-string :images-uris))
 
 (defn uri->uri-no-params [uri]
   (first (clojure.string/split uri #"[?]")))
@@ -60,19 +64,8 @@
 
 (comment
 
-  (def clj-uri "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Clojure_logo.svg/1024px-Clojure_logo.svg.png")
 
-  (def ff14 "https://images.squarespace-cdn.com/content/v1/56d5457d8259b57a20245e80/1601292966362-64C0QOLKVLD248Q5UFOD/ff14+new+player+experience.jpg?format=1500w")
-
-  (def ff14-2 "https://sm.ign.com/ign_br/news/a/after-bein/after-being-literally-too-popular-to-handle-final-fantasy-14_auh5.jpg")
-
-  (uri->image-name clj-uri)
-
-  (uri->image-name ff14)
-
-  (no-dups [clj-uri ff14 ff14-2 ff14 ff14-2 clj-uri])
-
-  (time (images->zip [clj-uri ff14 ff14-2 ff14 ff14-2 clj-uri]))
+  (time (images->zip (load-image-uris-from-resource)))
 
 
 
