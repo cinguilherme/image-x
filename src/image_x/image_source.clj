@@ -6,11 +6,13 @@
             [image-resizer.resize :as resize]
             [image-resizer.scale-methods :as scales]))
 
+(defn- tap [v] (do (println v) v))
+
 (defn load-image-uris-from-resource
   ([]
-   (-> "resources/images.edn" slurp edn/read-string :images-uris))
+   (-> "resources/images.edn" slurp edn/read-string :uris))
   ([file-path]
-   (-> file-path slurp edn/read-string :images-uris)))
+   (-> file-path slurp edn/read-string :uris)))
 
 (defn uri->uri-no-params [uri]
   (first (clojure.string/split uri #"[?]")))
@@ -53,25 +55,18 @@
   [image-names]
   (mapv #(io/delete-file %) image-names))
 
-(defn resize-with-new-names
-  [image-name size fn]
-  (let [new-name (str size "_" image-name)]
+(defn resize-with-new-names-2 [fnz image-name]
+  (let [new-name (str (:size fnz) "_" image-name)
+        f (:fn fnz)]
     (-> (io/file image-name)
-        fn
+        f
         (format/as-file new-name :verbatim))
+    (println new-name)
     new-name))
-
-(defn resize-with-new-names-2 [fnz]
-  (fn [image-name]
-    (let [new-name (str (:size fnz) "_" image-name)]
-      (-> (io/file image-name)
-          (:fn fnz)
-          (format/as-file new-name :verbatim))
-      new-name)))
 
 (defn make-resize-fn-coll
   [sizes-list]
-  (mapv (fn [{:keys [height width] :as size-map}]
+  (mapv (fn [{:keys [height width]}]
           {:fn   (resize/resize-fn height width scales/ultra-quality)
            :size height})
         sizes-list))
@@ -82,36 +77,26 @@
      {:height 200 :width 200}
      {:height 100 :width 100}]))
 
-(defn xplode [fnz image-names]
-  (let [colf (mapv #(resize-with-new-names-2 %) fnz)
-        _ (mapv
-            (fn [image-name]
-              (pmap
-                (fn [f] (f image-name))
-                colf))
-            image-names)]))
+(defn image-names-fnz->comb [image-names fnz]
+  (mapv
+    (fn [name] {:image name :fnz fnz})
+    image-names))
 
-(comment
-  (mapv #(resize-with-new-names-2 %) default-sizes-fn))
+(defn explode [fnz image-names]
+  (let [comb (tap (image-names-fnz->comb image-names fnz))]
+    (mapv (fn [{:keys [image fnz]}]
+           (->> fnz
+                (pmap (fn [f] (resize-with-new-names-2 f image)))))
+          comb)))
 
 (defn resize-images!->collect-names
   ([images-names]
-   (let [fn-quality-500 (resize/resize-fn 500 500 scales/ultra-quality)
-         fn-quality-200 (resize/resize-fn 200 200 scales/ultra-quality)
-         fn-quality-100 (resize/resize-fn 100 100 scales/ultra-quality)
-         fn-quality-50 (resize/resize-fn 50 50 scales/ultra-quality)
-         _ (println "Resizing images...")
-
-         _ (mapv images-names)
-
-         z500 (pmap #(resize-with-new-names % 500 fn-quality-500) images-names)
-         z200 (pmap #(resize-with-new-names % 200 fn-quality-200) images-names)
-         z100 (pmap #(resize-with-new-names % 100 fn-quality-100) images-names)
-         z50 (pmap #(resize-with-new-names % 50 fn-quality-50) images-names)
-
+   (let [_ (println "Resizing images...")
+         _ (println images-names)
+         rxp (explode default-sizes-fn images-names)
+         _ (println rxp)
          _ (println "Resizing images...done")]
-     (->> [z500 z200 z100 z50 images-names] flatten vec))))
-
+     (->> [rxp images-names] flatten vec))))
 
 (defn images->zip [images-uris]
   "takes sequence of image URI and make a zip file with the downloaded images."
