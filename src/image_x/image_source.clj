@@ -53,27 +53,64 @@
   [image-names]
   (mapv #(io/delete-file %) image-names))
 
-(defn resize-with-new-names [image-name size fn]
+(defn resize-with-new-names
+  [image-name size fn]
   (let [new-name (str size "_" image-name)]
     (-> (io/file image-name)
         fn
         (format/as-file new-name :verbatim))
     new-name))
 
-(defn resize-images!->collect-names [images-names]
-  (let [fn-quality-500 (resize/resize-fn 500 500 scales/ultra-quality)
-        fn-quality-200 (resize/resize-fn 200 200 scales/ultra-quality)
-        fn-quality-100 (resize/resize-fn 100 100 scales/ultra-quality)
-        fn-quality-50 (resize/resize-fn 50 50 scales/ultra-quality)
-        _ (println "Resizing images...")
+(defn resize-with-new-names-2 [fnz]
+  (fn [image-name]
+    (let [new-name (str (:size fnz) "_" image-name)]
+      (-> (io/file image-name)
+          (:fn fnz)
+          (format/as-file new-name :verbatim))
+      new-name)))
 
-        z500 (pmap #(resize-with-new-names % 500 fn-quality-500) images-names)
-        z200 (pmap #(resize-with-new-names % 200 fn-quality-200) images-names)
-        z100 (pmap #(resize-with-new-names % 100 fn-quality-100) images-names)
-        z50 (pmap #(resize-with-new-names % 50 fn-quality-50) images-names)
+(defn make-resize-fn-coll
+  [sizes-list]
+  (mapv (fn [{:keys [height width] :as size-map}]
+          {:fn   (resize/resize-fn height width scales/ultra-quality)
+           :size height})
+        sizes-list))
 
-        _ (println "Resizing images...done")]
-    (->> [z500 z200 z100 z50 images-names] flatten vec)))
+(def default-sizes-fn
+  (make-resize-fn-coll
+    [{:height 500 :width 500}
+     {:height 200 :width 200}
+     {:height 100 :width 100}]))
+
+(defn xplode [fnz image-names]
+  (let [colf (mapv #(resize-with-new-names-2 %) fnz)
+        _ (mapv
+            (fn [image-name]
+              (pmap
+                (fn [f] (f image-name))
+                colf))
+            image-names)]))
+
+(comment
+  (mapv #(resize-with-new-names-2 %) default-sizes-fn))
+
+(defn resize-images!->collect-names
+  ([images-names]
+   (let [fn-quality-500 (resize/resize-fn 500 500 scales/ultra-quality)
+         fn-quality-200 (resize/resize-fn 200 200 scales/ultra-quality)
+         fn-quality-100 (resize/resize-fn 100 100 scales/ultra-quality)
+         fn-quality-50 (resize/resize-fn 50 50 scales/ultra-quality)
+         _ (println "Resizing images...")
+
+         _ (mapv images-names)
+
+         z500 (pmap #(resize-with-new-names % 500 fn-quality-500) images-names)
+         z200 (pmap #(resize-with-new-names % 200 fn-quality-200) images-names)
+         z100 (pmap #(resize-with-new-names % 100 fn-quality-100) images-names)
+         z50 (pmap #(resize-with-new-names % 50 fn-quality-50) images-names)
+
+         _ (println "Resizing images...done")]
+     (->> [z500 z200 z100 z50 images-names] flatten vec))))
 
 
 (defn images->zip [images-uris]
