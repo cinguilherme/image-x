@@ -74,8 +74,10 @@
 (def default-sizes-fn
   (make-resize-fn-coll
     [{:height 500 :width 500}
+     {:height 300 :width 300}
      {:height 200 :width 200}
-     {:height 100 :width 100}]))
+     {:height 100 :width 100}
+     {:height 50 :width 50}]))
 
 (defn image-names-fnz->comb [image-names fnz]
   (mapv
