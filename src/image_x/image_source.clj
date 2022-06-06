@@ -91,25 +91,37 @@
 
 (defn resize-images!->collect-names
   ([images-names]
+   (resize-images!->collect-names images-names default-sizes-fn))
+  ([images-names sizes-output]
    (let [_ (println "Resizing images...")
-         _ (println images-names)
-         rxp (explode default-sizes-fn images-names)
-         _ (println rxp)
+         rxp (explode sizes-output images-names)
          _ (println "Resizing images...done")]
      (->> [rxp images-names] flatten vec))))
 
-(defn images->zip [images-uris]
+(defn images->zip
   "takes sequence of image URI and make a zip file with the downloaded images."
-  (let [images (->> images-uris
-                    (map uri->uri-no-params)
-                    no-dups
-                    (map uri->img-map)
-                    (map uri-map->future-image!)
-                    (map future->image!)
-                    resize-images!->collect-names)
-        zip-file (zip-images images)]
-    (do (future (clear-temps images))
-        zip-file)))
+  ([images-uris]
+   (let [images (->> images-uris
+                     (map uri->uri-no-params)
+                     no-dups
+                     (map uri->img-map)
+                     (map uri-map->future-image!)
+                     (map future->image!)
+                     resize-images!->collect-names)
+         zip-file (zip-images images)]
+     (do (future (clear-temps images))
+         zip-file)))
+  ([images-uris sizes-output]
+   (let [images (->> images-uris
+                     (map uri->uri-no-params)
+                     no-dups
+                     (map uri->img-map)
+                     (map uri-map->future-image!)
+                     (map future->image!)
+                     (resize-images!->collect-names sizes-output))
+         zip-file (zip-images images)]
+     (do (future (clear-temps images))
+         zip-file))))
 
 
 (comment

@@ -5,7 +5,6 @@
   (:require [image-x.file-resolver :as f]
             [image-x.image-source :as source]))
 
-
 (defn edn-path->zip-images!
   "Path to edn file with format like
   {:uris [\"https://somewhere.image.png\"]}"
