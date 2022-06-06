@@ -4,7 +4,9 @@
             [clojure.edn :as edn]
             [image-resizer.format :as format]
             [image-resizer.resize :as resize]
-            [image-resizer.scale-methods :as scales]))
+            [image-resizer.scale-methods :as scales]
+            [schema.core :as s]
+            [image-x.schema :as imx-s]))
 
 (defn- tap [v] (do (println v) v))
 
@@ -64,15 +66,15 @@
     (println new-name)
     new-name))
 
-(defn make-resize-fn-coll
+(defn make-config-map-fns
   [sizes-list]
   (mapv (fn [{:keys [height width]}]
           {:fn   (resize/resize-fn height width scales/ultra-quality)
            :size height})
         sizes-list))
 
-(def default-sizes-fn
-  (make-resize-fn-coll
+(def default-config-maps
+  (make-config-map-fns
     [{:height 500 :width 500}
      {:height 300 :width 300}
      {:height 200 :width 200}
@@ -87,22 +89,25 @@
 (defn explode [fnz image-names]
   (let [comb (tap (image-names-fnz->comb image-names fnz))]
     (mapv (fn [{:keys [image fnz]}]
-           (->> fnz
-                (pmap (fn [f] (resize-with-new-names-2 f image)))))
+            (->> fnz
+                 (pmap (fn [f] (resize-with-new-names-2 f image)))))
           comb)))
 
 (defn resize-images!->collect-names
   ([images-names]
-   (resize-images!->collect-names images-names default-sizes-fn))
-  ([images-names sizes-output]
+   (resize-images!->collect-names default-config-maps images-names))
+  ([config-maps images-names]
    (let [_ (println "Resizing images...")
-         rxp (explode sizes-output images-names)
+         rxp (explode config-maps images-names)
          _ (println "Resizing images...done")]
      (->> [rxp images-names] flatten vec))))
 
-(defn images->zip
-  "takes sequence of image URI and make a zip file with the downloaded images."
-  ([images-uris]
+(s/defn images->zip
+
+  "takes sequence of image URI and a list of configurations
+  and make a zip file with the downloaded images."
+
+  ([images-uris :- [s/Str]]
    (let [images (->> images-uris
                      (map uri->uri-no-params)
                      no-dups
@@ -111,18 +116,21 @@
                      (map future->image!)
                      resize-images!->collect-names)
          zip-file (zip-images images)]
-     (do (future (clear-temps images))
+     (do (clear-temps images)
          zip-file)))
-  ([images-uris sizes-output]
-   (let [images (->> images-uris
+
+  ([config-maps :- imx-s/InputPayload
+    images-uris  :- [s/Str]]
+   (let [configs (make-config-map-fns config-maps)
+         images (->> images-uris
                      (map uri->uri-no-params)
                      no-dups
                      (map uri->img-map)
                      (map uri-map->future-image!)
                      (map future->image!)
-                     (resize-images!->collect-names sizes-output))
+                     (resize-images!->collect-names configs))
          zip-file (zip-images images)]
-     (do (future (clear-temps images))
+     (do (clear-temps images)
          zip-file))))
 
 
