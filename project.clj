@@ -1,5 +1,5 @@
-(defproject org.clojars.cinguilherme/image-x "0.1.1"
-  :description "FIXME: write description"
+(defproject org.clojars.cinguilherme/image-x "0.1.2"
+  :description "lib to facilitate images download and alternative sizes"
   :url "https://github.com/cinguilherme/image-x"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
